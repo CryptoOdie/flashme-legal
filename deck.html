@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flash Me deck</title>
+    <meta name="description" content="A flashcard deck shared from Flash Me: snap your notes into flashcards." />
+    <meta property="og:title" content="A Flash Me deck was shared with you" />
+    <meta property="og:description" content="Open it in Flash Me to study it, free." />
+    <meta property="og:image" content="https://cryptoodie.github.io/flashme-legal/flashme-logo-pink.png" />
+    <meta name="apple-itunes-app" content="app-id=6782302184" />
+    <style>
+      :root { --bg: #4a5058; --surface: #565e68; --pink: #f859ce; --cream: #f8eee0; --ink: #f6f0e2; --muted: rgba(246, 240, 226, 0.72); }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; line-height: 1.45; }
+      main { max-width: 560px; margin: 0 auto; padding: 28px 16px 48px; }
+      .logo { display: block; width: 132px; height: auto; margin: 0 auto 18px; }
+      .eyebrow { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+      h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 600; font-size: 30px; letter-spacing: -0.5px; margin: 4px 0 2px; overflow-wrap: anywhere; }
+      .count { color: var(--muted); margin: 0 0 20px; }
+      .btn { display: block; text-align: center; text-decoration: none; font-weight: 700; font-size: 17px; padding: 16px; border-radius: 999px; margin: 10px 0; }
+      .primary { background: var(--pink); color: #fff; box-shadow: 0 6px 22px rgba(248, 89, 206, 0.45); }
+      .secondary { background: var(--cream); color: #111; }
+      .note { color: var(--muted); font-size: 14px; text-align: center; margin: 6px 0 22px; }
+      .cards { display: grid; gap: 10px; margin-top: 18px; }
+      .card { background: var(--surface); border-radius: 16px; padding: 14px 16px; }
+      .q { font-weight: 600; margin: 0 0 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .a { color: var(--ink); margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .cat { color: var(--pink); font-size: 12px; font-weight: 600; margin: 0 0 4px; }
+      .state { text-align: center; color: var(--muted); padding: 40px 0; }
+      footer { margin-top: 36px; text-align: center; font-size: 13px; color: var(--muted); }
+      footer a { color: var(--ink); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img class="logo" src="flashme-logo-pink.png" alt="Flash Me" width="384" height="256" />
+      <div id="state" class="state">Loading deck…</div>
+      <section id="deck" hidden>
+        <p class="eyebrow">Shared with you</p>
+        <h1 id="name"></h1>
+        <p class="count" id="count"></p>
+        <a class="btn primary" id="open">Open in Flash Me</a>
+        <a class="btn secondary" href="https://apps.apple.com/app/id6782302184">Get Flash Me on the App Store</a>
+        <p class="note" id="note">Free. Opens the deck so you can study it.</p>
+        <div class="cards" id="cards"></div>
+      </section>
+      <footer>Made with Flash Me: snap your notes into flashcards. · <a href="privacy.html">Privacy</a></footer>
+    </main>
+    <script>
+      (function () {
+        var API = 'https://canhqehljgphiqcguais.supabase.co/functions/v1/share-deck';
+        var KEY = 'sb_publishable_TNVz-6HdAOomsxgopZ1w8Q_qVfDcDnA'; // public, RLS-bound publishable key
+        var code = (new URLSearchParams(location.search).get('c') || '').toLowerCase();
+        var stateEl = document.getElementById('state');
+        function fail(msg) { stateEl.textContent = msg; }
+        if (!/^[a-z0-9]{6,12}$/.test(code)) return fail("This link doesn't point to a deck.");
+        if (/android/i.test(navigator.userAgent)) {
+          document.getElementById('note').textContent = 'Flash Me is on iPhone right now. Android is coming soon. You can read the cards below.';
+        }
+        document.getElementById('open').href = 'flashcards://share/' + code;
+        fetch(API + '?c=' + encodeURIComponent(code), { headers: { apikey: KEY, authorization: 'Bearer ' + KEY } })
+          .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+          .then(function (d) {
+            document.title = d.name + ' · Flash Me deck';
+            document.getElementById('name').textContent = d.name;
+            document.getElementById('count').textContent = d.count + ' flashcard' + (d.count === 1 ? '' : 's');
+            var list = document.getElementById('cards');
+            d.cards.forEach(function (c) {
+              var el = document.createElement('div');
+              el.className = 'card';
+              if (c.category) { var cat = document.createElement('p'); cat.className = 'cat'; cat.textContent = c.category; el.appendChild(cat); }
+              var q = document.createElement('p'); q.className = 'q'; q.textContent = c.front; el.appendChild(q);
+              var a = document.createElement('p'); a.className = 'a'; a.textContent = c.back; el.appendChild(a);
+              list.appendChild(el);
+            });
+            stateEl.hidden = true;
+            document.getElementById('deck').hidden = false;
+          })
+          .catch(function () { fail("We couldn't find this deck. The link may be mistyped. Ask your friend to share it again."); });
+      })();
+    </script>
+  </body>
+</html>
